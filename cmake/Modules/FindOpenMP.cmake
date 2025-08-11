@@ -289,9 +289,19 @@ function(_OPENMP_GET_FLAGS LANG FLAG_MODE OPENMP_FLAG_VAR OPENMP_LIB_NAMES_VAR)
       mark_as_advanced(OpenMP_libomp_LIBRARY)
     endif()
 
+    # Use appropriate OpenMP runtime for each compiler (libomp for Clang, GOMP for GCC)
+    if((CMAKE_${LANG}_COMPILER_ID STREQUAL "Clang") OR (CMAKE_${LANG}_COMPILER_ID STREQUAL "AppleClang"))
+      set(OpenMP_libomp_LIBRARY_order "omp iomp5" CACHE STRING "OpenMP library order")
+    elseif(CMAKE_${LANG}_COMPILER_ID STREQUAL "GNU")
+      set(OpenMP_libomp_LIBRARY_order "gomp iomp5" CACHE STRING "OpenMP library order")
+    else()
+      set(OpenMP_libomp_LIBRARY_order "omp gomp iomp5" CACHE STRING "libomp library order")
+    endif()
+    message(STATUS "OpenMP library search order for ${CMAKE_${LANG}_COMPILER_ID} ${LANG}: ${OpenMP_libomp_LIBRARY_order}")
+
     if (NOT OpenMP_libomp_LIBRARY)
       find_library(OpenMP_libomp_LIBRARY
-        NAMES omp gomp iomp5
+        NAMES ${OpenMP_libomp_LIBRARY_order}
         HINTS ${CMAKE_${LANG}_IMPLICIT_LINK_DIRECTORIES}
         DOC "libomp location for OpenMP"
       )
@@ -301,7 +311,7 @@ function(_OPENMP_GET_FLAGS LANG FLAG_MODE OPENMP_FLAG_VAR OPENMP_LIB_NAMES_VAR)
     # Use OpenMP_PREFIX if defined
     if (NOT OpenMP_libomp_LIBRARY AND NOT "${OpenMP_PREFIX}" STREQUAL "")
       find_library(OpenMP_libomp_LIBRARY
-        NAMES omp gomp iomp5
+        NAMES ${OpenMP_libomp_LIBRARY_order}
         HINTS "${OpenMP_PREFIX}/lib"
         DOC "libomp location for OpenMP"
       )
@@ -327,6 +337,8 @@ function(_OPENMP_GET_FLAGS LANG FLAG_MODE OPENMP_FLAG_VAR OPENMP_LIB_NAMES_VAR)
         set("${OPENMP_FLAG_VAR}" "${OPENMP_FLAG}" PARENT_SCOPE)
         if(OpenMP_libomp_LIBRARY MATCHES "iomp5")
           set("${OPENMP_LIB_NAMES_VAR}" "libiomp5" PARENT_SCOPE)
+        elseif(OpenMP_libomp_LIBRARY MATCHES "gomp")
+          set("${OPENMP_LIB_NAMES_VAR}" "gomp" PARENT_SCOPE)
         else()
           set("${OPENMP_LIB_NAMES_VAR}" "libomp" PARENT_SCOPE)
         endif()
@@ -411,7 +423,7 @@ function(_OPENMP_GET_FLAGS LANG FLAG_MODE OPENMP_FLAG_VAR OPENMP_LIB_NAMES_VAR)
       #
       # Check for separate OpenMP library on AppleClang 7+
       find_library(OpenMP_libomp_LIBRARY
-        NAMES omp gomp iomp5
+        NAMES ${OpenMP_libomp_LIBRARY_order}
         HINTS ${CMAKE_${LANG}_IMPLICIT_LINK_DIRECTORIES}
         DOC "libomp location for OpenMP"
       )
