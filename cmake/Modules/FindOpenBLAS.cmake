@@ -32,7 +32,8 @@ SET(Open_BLAS_LIB_SEARCH_PATHS
  )
 
 FIND_PATH(OpenBLAS_INCLUDE_DIR NAMES cblas.h PATHS ${Open_BLAS_INCLUDE_SEARCH_PATHS})
-FIND_LIBRARY(OpenBLAS_LIB NAMES openblas PATHS ${Open_BLAS_LIB_SEARCH_PATHS})
+# Fedora and RHEL-based system provide a openblaso for openblas-openmp
+FIND_LIBRARY(OpenBLAS_LIB NAMES openblaso openblas PATHS ${Open_BLAS_LIB_SEARCH_PATHS})
 
 SET(OpenBLAS_FOUND ON)
 
